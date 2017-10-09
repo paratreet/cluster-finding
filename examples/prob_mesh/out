@@ -1,0 +1,18 @@
+Charmrun> scalable start enabled. 
+Charmrun> started all node programs in 0.006 seconds.
+Charm++> Running in SMP mode: numNodes 2,  2 worker threads per process
+Charm++> The comm. thread both sends and receives messages
+Converse/Charm++ Commit ID: v6.8.0-beta1-76-g200373edc
+Warning> using Isomalloc in SMP mode, you may need to run with '+isomalloc_sync'.
+Charm++> scheduler running in netpoll mode.
+CharmLB> Load balancer assumes all CPUs are same.
+Charm++> Running on 1 unique compute nodes (8-way SMP).
+Charm++> cpu topology info is gathered in 0.008 seconds.
+[Main] Library array created and proxy obtained
+[Main] Inveretd trees constructed. Notify library to do component detection
+[Main] Tree construction time: 0.077077
+[Main] Components identified, prune unecessary ones now
+[Main] Components detection time: 0.099677
+Number of components found: 23409
+[Main] Final runtime: 0.143504
+[Partition 0][Node 0] End of program

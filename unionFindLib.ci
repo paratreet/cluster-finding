@@ -1,0 +1,37 @@
+module unionFindLib {
+    include "types.h";
+    // initnode function to register custom reduction
+    initnode void register_merge_count_maps_reduction(void);
+
+    readonly CkGroupID libGroupID;
+
+    array[1D] UnionFindLib {
+        entry UnionFindLib(CkCallback cb);
+        // functions to build inverted trees
+        entry void find_boss1(int arrIdx, long partnerID, long initID);
+        entry void find_boss2(int arrIdx, long boss1ID, long initID);
+
+        // function for path compression support
+        entry void compress_path(int arrIdx, long compressedParent);
+
+        // functions to perform distributed connected components
+        entry void find_components(CkCallback cb);
+        entry void need_boss(int arrIdx, int fromID);
+        entry void set_component(int arrIdx, int compNum);
+
+        // functions to prune out small components
+        entry void prune_components(int threshold, CkCallback cb);
+        entry [reductiontarget,nokeep] void merge_count_results(CkReductionMsg *msg);
+
+        // TRAM functions
+        entry [aggregate] void insertDataFindBoss(const findBossData & data);
+        entry [aggregate] void insertDataNeedBoss(const uint64_t & data);
+    }
+
+    // group chare to support the library chares
+    group UnionFindLibGroup {
+        entry UnionFindLibGroup();
+        entry [reductiontarget] void done_profiling(int result);
+        entry void contribute_count();
+    }
+};

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+for f in ./graphs/*.g; do
+    echo "Running test graph $f ..."
+    ./charmrun +p4 ./graph $f ++local
+done
