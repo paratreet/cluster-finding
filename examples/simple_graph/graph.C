@@ -9,16 +9,19 @@
 /*readonly*/ int NUM_VERTICES;
 /*readonly*/ int NUM_EDGES;
 /*readonly*/ int NUM_TREEPIECES;
+/*readonly*/ long int lastChareBegin;
 
 class Main : public CBase_Main {
     CProxy_TreePiece tpProxy;
+    double startTime;
     public:
     Main(CkArgMsg *m) {
-        if (m->argc != 2) {
-            CkPrintf("Usage: ./graph <input_file>\n");
+        if (m->argc != 3) {
+            CkPrintf("Usage: ./graph <input_file> <num_chares_per_pe>\n");
             CkExit();
         }
         std::string inputFileName(m->argv[1]);
+        int charesPerPe = atoi(m->argv[2]);
         FILE *fp = fopen(inputFileName.c_str(), "r");
         char line[256];
         fgets(line, sizeof(line), fp);
@@ -33,25 +36,31 @@ class Main : public CBase_Main {
 
         NUM_VERTICES = std::stoi(params[0].substr(strlen("Vertices:")));
         NUM_EDGES = std::stoi(params[1].substr(strlen("Edges:")));
-        NUM_TREEPIECES = std::stoi(params[2].substr(strlen("Treepieces:")));
+        //NUM_TREEPIECES = std::stoi(params[2].substr(strlen("Treepieces:")));
+        NUM_TREEPIECES = CkNumPes() * charesPerPe;
 
         fclose(fp);
 
-        if (NUM_VERTICES % NUM_TREEPIECES != 0) {
-            CkPrintf("Vertices should be evenly distributed for all treepieces. Requirement for naive location mapper!\n");
+        if (NUM_VERTICES < NUM_TREEPIECES) {
+            CkPrintf("Fewer vertices than treepieces\n");
             CkExit();
         }
         tpProxy = CProxy_TreePiece::ckNew(inputFileName, NUM_TREEPIECES);
+        // find first vertex ID on last chare
+        lastChareBegin = (NUM_VERTICES/NUM_TREEPIECES) * (NUM_TREEPIECES-1) + 1;
         // create a callback for library to inform application after
         // completing inverted tree construction
         CkCallback cb(CkIndex_Main::done(), thisProxy);
-        libProxy = UnionFindLib::unionFindInit(tpProxy, cb, NUM_TREEPIECES);
-        CkPrintf("[Main] Library array created and proxy obtained\n");
+        libProxy = UnionFindLib::unionFindInit(tpProxy, NUM_TREEPIECES);
+        CkPrintf("[Main] Library array with %d chares created and proxy obtained\n", NUM_TREEPIECES);
+        libProxy[0].register_phase_one_cb(cb);
+        startTime = CkWallTimer();
         tpProxy.initializeLibVertices();
     }
 
     void done() {
         CkPrintf("[Main] Inverted trees constructed. Notify library to perform components detection\n");
+        CkPrintf("[Main] Tree construction time: %f\n", CkWallTimer()-startTime);
         // callback for library to inform application after completing
         // connected components detection
         CkCallback cb(CkIndex_Main::doneFindComponents(), thisProxy);
@@ -61,12 +70,14 @@ class Main : public CBase_Main {
 
     void doneFindComponents() {
         CkPrintf("[Main] Components identified, prune unecessary ones now\n");
+        CkPrintf("[Main] Components detection time: %f\n", CkWallTimer()-startTime);
         // callback for library to report to after pruning
         CkCallback cb(CkIndex_TreePiece::requestVertices(), tpProxy);
         libProxy.prune_components(1, cb);
     }
 
     void donePrinting() {
+        CkPrintf("[Main] Final runtime: %f\n", CkWallTimer()-startTime);
         CkExit();
     }
 
@@ -163,7 +174,12 @@ class TreePiece : public CBase_TreePiece {
 std::pair<int, int>
 TreePiece::getLocationFromID(long int vid) {
     int chareIdx = (vid-1) / (NUM_VERTICES/NUM_TREEPIECES);
-    int arrIdx = (vid-1) % (NUM_VERTICES/NUM_TREEPIECES);
+    chareIdx = std::min(chareIdx, NUM_TREEPIECES-1);
+    int arrIdx;
+    if (vid > lastChareBegin)
+        arrIdx = vid - lastChareBegin;
+    else
+        arrIdx = (vid-1) % (NUM_VERTICES/NUM_TREEPIECES);
     return std::make_pair(chareIdx, arrIdx);
 }
 

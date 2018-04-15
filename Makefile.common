@@ -1,0 +1,16 @@
+#set the following variables to absolute paths
+CHARM_DIR = "path/to/charm"
+UNION_FIND_DIR = "path/to/cluster-finding"
+PREFIX_LIB_DIR = $(UNION_FIND_DIR)/prefixLib
+
+#charmc options
+CHARMC = $(CHARM_DIR)/bin/charmc
+OPTS = -std=c++11 -O3 -g
+LD_OPTS =
+
+#options for building union-find library and prefix library
+PREFIX_LIBS = -L${PREFIX_LIB_DIR} -lprefix
+PREFIX_INC = -I${PREFIX_LIB_DIR}
+
+UNION_FIND_LIBS = -L${UNION_FIND_DIR} -lunionFind ${PREFIX_LIBS}
+UNION_FIND_INC = -I${UNION_FIND_DIR} ${PREFIX_INC}

@@ -33,8 +33,9 @@ class Main : public CBase_Main {
         mpProxy = CProxy_MeshPiece::ckNew(numMeshPieces);
         // callback for library to return to after inverted tree construction
         CkCallback cb(CkIndex_Main::doneInveretdTree(), thisProxy);
-        libProxy = UnionFindLib::unionFindInit(mpProxy, cb, numMeshPieces);
-        CkPrintf("[Main] Library array created and proxy obtained\n");
+        libProxy = UnionFindLib::unionFindInit(mpProxy, numMeshPieces);
+        CkPrintf("[Main] Library array with %d chares created and proxy obtained\n", numMeshPieces);
+        libProxy[0].register_phase_one_cb(cb);
         start_time = CkWallTimer();
         mpProxy.initializeLibVertices();
     }

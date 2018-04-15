@@ -9,6 +9,13 @@ struct unionFindVertex {
     long int parent;
     long int componentNumber = -1;
     std::vector<long int> need_boss_requests; //request queue for processing need_boss requests
+
+    void pup(PUP::er &p) {
+        p|vertexID;
+        p|parent;
+        p|componentNumber;
+        p|need_boss_requests;
+    }
 };
 
 struct componentCountMap {
@@ -34,20 +41,22 @@ class UnionFindLib : public CBase_UnionFindLib {
     int pathCompressionThreshold = 5;
     int componentPruneThreshold;
     std::pair<int, int> (*getLocationFromID)(long int vid);
+    int myLocalNumBosses;
+    int totalNumBosses;
+    CkCallback postComponentLabelingCb;
 
     public:
-    UnionFindLib(CkCallback cb) {
-        if (this->thisIndex == 0) {
-            CkStartQD(cb);
-        }
-    }
+    UnionFindLib() {}
     UnionFindLib(CkMigrateMessage *m) { }
-    static CProxy_UnionFindLib unionFindInit(CkArrayID clientArray, CkCallback cb, int n);
+    static CProxy_UnionFindLib unionFindInit(CkArrayID clientArray, int n);
+    void register_phase_one_cb(CkCallback cb);
     void initialize_vertices(unionFindVertex *appVertices, int numVertices);
     void union_request(long int vid1, long int vid2);
-    void find_boss1(int arrIdx, long int partnerID, long int initID);
-    void find_boss2(int arrIdx, long int boss1ID, long int initID);
+    void find_boss1(int arrIdx, long int partnerID, long int senderID);
+    void find_boss2(int arrIdx, long int boss1ID, long int senderID);
     void local_path_compression(unionFindVertex *src, long int compressedParent);
+    bool check_same_chares(long int v1, long int v2);
+    void short_circuit_parent(shortCircuitData scd);
     void compress_path(int arrIdx, long int compressedParent);
     unionFindVertex* return_vertices();
     void registerGetLocationFromID(std::pair<int, int> (*gloc)(long int v));
@@ -56,25 +65,32 @@ class UnionFindLib : public CBase_UnionFindLib {
 
     public:
     void find_components(CkCallback cb);
+    void boss_count_prefix_done(int totalCount);
+    void start_component_labeling();
     void insertDataNeedBoss(const uint64_t & data);
     void insertDataFindBoss(const findBossData & data);
     void need_boss(int arrIdx, long int fromID);
     void set_component(int arrIdx, long int compNum);
     void prune_components(int threshold, CkCallback appReturnCb);
-    void merge_count_results(CkReductionMsg *msg);
+    void perform_pruning();
+    int get_total_num_bosses() {
+        return totalNumBosses;
+    }
+    //void merge_count_results(CkReductionMsg *msg);
+    //void merge_count_results(int* totalCounts, int numElems);
 };
 
 // library group chare class declarations
 class UnionFindLibGroup : public CBase_UnionFindLibGroup {
     bool map_built;
-    std::unordered_map<long  int,int> component_count_map;
+    int* component_count_array;
     int thisPeMessages; //for profiling
     public:
     UnionFindLibGroup() {
         map_built = false;
         thisPeMessages = 0;
     }
-    void build_component_count_map(CkReductionMsg *msg);
+    void build_component_count_array(int* totalCounts, int numComponents);
     int get_component_count(long int component_id);
     void increase_message_count();
     void contribute_count();

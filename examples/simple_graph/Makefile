@@ -1,29 +1,19 @@
-BUILD_OPTS = -I../.. -c -std=c++11 -g
-CHARM_OPTS =
-TEST_OPTS = 
-CHARMC = ~/UIUC/charm/bin/charmc $(CHARM_OPTS)
+include ../../Makefile.common
 
 all: graph
 
-graph: unionFindLib.o graph.o
-	$(CHARMC) -language charm++ -o $@ graph.o unionFindLib.o
+graph: graph.o
+	$(CHARMC) ${LD_OPTS} -o $@ graph.o ${UNION_FIND_LIBS}
 
-graph.o : graph.C graph-io.h graph.decl.h graph.def.h unionFindLib.decl.h
-	$(CHARMC) $(BUILD_OPTS) -o graph.o graph.C
+graph.o : graph.C graph-io.h graph.decl.h graph.def.h
+	$(CHARMC) -c ${OPTS} ${UNION_FIND_INC} graph.C
 
 graph.decl.h graph.def.h : graph.ci
-	$(CHARMC) graph.ci
-
-unionFindLib.o : unionFindLib.decl.h unionFindLib.def.h
-	$(CHARMC) -o unionFindLib.o ../../unionFindLib.C
-
-unionFindLib.decl.h unionFindLib.def.h :
-	$(CHARMC) ../../unionFindLib.ci
-	cp unionFindLib.de* ../../
+	$(CHARMC) -E graph.ci
 
 clean:
 	rm -f *.decl.h *.def.h conv-host *.o graph charmrun
-	rm -f ../../*.decl.h ../../*.def.h
+	rm -f obtained.*
 
 cleanp:
 	rm -f *.sts *.gz *.projrc *.topo *.out

@@ -120,15 +120,15 @@ proteinVertex ReadVertex(FILE *fp) {
     }
 
     proteinVertex newVertex;
-    newVertex.id = std::stol(vertexFields[1]);
+    newVertex.id = stol(vertexFields[1]);
 #ifdef USE_SAMPLE
     newVertex.type = vertexFields[2];
 #endif
 #ifdef USE_PROTEIN   
     newVertex.complexType = vertexFields[2][0];
-    newVertex.x = std::stof(vertexFields[4]);
-    newVertex.y = std::stof(vertexFields[5]);
-    newVertex.z = std::stof(vertexFields[6]);
+    newVertex.x = stof(vertexFields[4]);
+    newVertex.y = stof(vertexFields[5]);
+    newVertex.z = stof(vertexFields[6]);
 #endif
     return newVertex;
 }
@@ -152,8 +152,8 @@ std::pair<long int, long int> ReadEdge(FILE *fp) {
     }
 
     std::pair<long int,long int> newEdge;
-    newEdge.first = std::stol(edgeFields[1]);
-    newEdge.second = std::stol(edgeFields[2]);
+    newEdge.first = stol(edgeFields[1]);
+    newEdge.second = stol(edgeFields[2]);
 
     return newEdge;
 }

@@ -6,6 +6,7 @@ mainmodule graph {
     readonly int NUM_VERTICES;
     readonly int NUM_EDGES;
     readonly int NUM_TREEPIECES;
+    readonly long lastChareBegin;
 
     mainchare Main {
         entry Main(CkArgMsg *m);
